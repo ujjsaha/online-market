@@ -1,14 +1,7 @@
 package com.onlinemarket.controller.stakeholder;
 
-import com.onlinemarket.dto.Pagination;
-import com.onlinemarket.dto.ResponseWrapper;
-import com.onlinemarket.dto.stakeholder.Stakeholder;
-import com.onlinemarket.dto.stakeholder.StakeholderLoginRequest;
-import com.onlinemarket.dto.stakeholder.StakeholderLoginResponse;
-import com.onlinemarket.exception.StakeholderNotFoundException;
-import com.onlinemarket.exception.StakeholderValidationException;
-import com.onlinemarket.service.stakeholder.StakeholderService;
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.onlinemarket.dto.Pagination;
+import com.onlinemarket.dto.ResponseWrapper;
+import com.onlinemarket.dto.stakeholder.Stakeholder;
+import com.onlinemarket.dto.stakeholder.StakeholderLoginRequest;
+import com.onlinemarket.dto.stakeholder.StakeholderLoginResponse;
+import com.onlinemarket.exception.StakeholderNotFoundException;
+import com.onlinemarket.exception.StakeholderValidationException;
+import com.onlinemarket.service.stakeholder.StakeholderService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/stakeholder")
@@ -38,7 +40,7 @@ public class StakeholderController {
 	}
 
 	@PostMapping("/saveOrUpdate")
-	public ResponseWrapper<Stakeholder> saveOrUpdate(@RequestBody Stakeholder stakeholder) {
+	public ResponseWrapper<Stakeholder> saveOrUpdate(@Valid @RequestBody Stakeholder stakeholder) {
 		return execute(() -> stakeholderService.saveOrUpdate(stakeholder), "Stakeholder saved successfully");
 	}
 
