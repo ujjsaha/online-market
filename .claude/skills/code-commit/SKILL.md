@@ -1,7 +1,7 @@
 ---
 name: code-commit
 description: Commit the current changes on a feature branch, push it, and open a GitHub pull request. Use when the user asks to commit and raise/open/create a PR.
-argument-hint: [optional notes, e.g. "fixes #42" or "base: develop"]
+argument-hint: "[optional notes, e.g. 'fixes #42' or 'base: develop']"
 disable-model-invocation: true
 allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git checkout -b *) Bash(git add *) Bash(git commit *) Bash(git push *) Bash(git remote *) Bash(git rev-parse *) Bash(gh pr create *) Bash(gh pr view *) Bash(gh auth status *)
 ---
