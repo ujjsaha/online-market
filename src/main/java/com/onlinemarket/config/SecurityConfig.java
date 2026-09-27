@@ -24,6 +24,8 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
+				// Let Spring Boot's error page through so real errors (e.g. 500) aren't masked as 401.
+				.requestMatchers("/error").permitAll()
 				.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
 				.requestMatchers("/h2-console/**").permitAll()
 				.requestMatchers("/stakeholder/login").permitAll()

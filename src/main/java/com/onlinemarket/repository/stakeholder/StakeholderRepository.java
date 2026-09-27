@@ -17,8 +17,7 @@ public interface StakeholderRepository extends JpaRepository<StakeholderEntity, 
 
 	@Query("""
 		select s from StakeholderEntity s
-		where :searchBy is null
-			or lower(s.name) like lower(concat('%', :searchBy, '%'))
+		where lower(s.name) like lower(concat('%', :searchBy, '%'))
 			or lower(s.email) like lower(concat('%', :searchBy, '%'))
 		""")
 	Page<StakeholderEntity> search(@Param("searchBy") String searchBy, Pageable pageable);
