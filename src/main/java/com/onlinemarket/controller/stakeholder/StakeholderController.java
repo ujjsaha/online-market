@@ -1,7 +1,10 @@
 package com.onlinemarket.controller.stakeholder;
 
 import java.util.List;
+import java.util.function.Supplier;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,43 +38,61 @@ public class StakeholderController {
 	}
 
 	@PostMapping("/login")
-	public ResponseWrapper<StakeholderLoginResponse> login(@Valid @RequestBody StakeholderLoginRequest request) {
-		return execute(() -> stakeholderService.login(request.getEmail(), request.getPassword()), "Login successful");
+	public ResponseEntity<ResponseWrapper<StakeholderLoginResponse>> login(@Valid @RequestBody StakeholderLoginRequest request) {
+		return execute(() -> stakeholderService.login(request.getEmail(), request.getPassword()), "Login successful",
+			HttpStatus.UNAUTHORIZED);
 	}
 
 	@PostMapping("/saveOrUpdate")
-	public ResponseWrapper<Stakeholder> saveOrUpdate(@Valid @RequestBody Stakeholder stakeholder) {
+	public ResponseEntity<ResponseWrapper<Stakeholder>> saveOrUpdate(@Valid @RequestBody Stakeholder stakeholder) {
 		return execute(() -> stakeholderService.saveOrUpdate(stakeholder), "Stakeholder saved successfully");
 	}
 
 	@GetMapping("/fetchById")
-	public ResponseWrapper<Stakeholder> fetchById(@RequestParam Long id) {
+	public ResponseEntity<ResponseWrapper<Stakeholder>> fetchById(@RequestParam("id") Long id) {
 		return execute(() -> stakeholderService.fetchById(id), "Stakeholder fetched successfully");
 	}
 
 	@PostMapping("/fetchAllStakeholders")
-	public ResponseWrapper<List<Stakeholder>> fetchAllStakeholders(@RequestBody Pagination pagination) {
+	public ResponseEntity<ResponseWrapper<List<Stakeholder>>> fetchAllStakeholders(@RequestBody Pagination pagination) {
 		return execute(() -> stakeholderService.fetchAllStakeholders(pagination), "Stakeholders fetched successfully");
 	}
 
 	@DeleteMapping("/delete")
-	public ResponseWrapper<Void> delete(@RequestParam Long id) {
+	public ResponseEntity<ResponseWrapper<Void>> delete(@RequestParam("id") Long id) {
 		return execute(() -> {
 			stakeholderService.delete(id);
 			return null;
 		}, "Stakeholder deleted successfully");
 	}
 
-	private <T> ResponseWrapper<T> execute(java.util.function.Supplier<T> action, String successMessage) {
+	private <T> ResponseEntity<ResponseWrapper<T>> execute(Supplier<T> action, String successMessage) {
+		return execute(action, successMessage, HttpStatus.BAD_REQUEST);
+	}
+
+	/**
+	 * Runs the action and wraps the outcome. HTTP 200 is used only for success;
+	 * a missing stakeholder maps to 404 and a validation failure to {@code validationStatus}.
+	 */
+	private <T> ResponseEntity<ResponseWrapper<T>> execute(Supplier<T> action, String successMessage,
+			HttpStatus validationStatus) {
 		ResponseWrapper<T> response = new ResponseWrapper<>();
 		try {
 			response.setData(action.get());
 			response.setResponseCode(SUCCESS);
 			response.setResponseMessage(successMessage);
-		} catch (StakeholderNotFoundException | StakeholderValidationException ex) {
-			response.setResponseCode(FAILURE);
-			response.setResponseMessage(ex.getMessage());
+			return ResponseEntity.ok(response);
+		} catch (StakeholderNotFoundException ex) {
+			return failure(response, ex, HttpStatus.NOT_FOUND);
+		} catch (StakeholderValidationException ex) {
+			return failure(response, ex, validationStatus);
 		}
-		return response;
+	}
+
+	private <T> ResponseEntity<ResponseWrapper<T>> failure(ResponseWrapper<T> response, RuntimeException ex,
+			HttpStatus status) {
+		response.setResponseCode(FAILURE);
+		response.setResponseMessage(ex.getMessage());
+		return ResponseEntity.status(status).body(response);
 	}
 }

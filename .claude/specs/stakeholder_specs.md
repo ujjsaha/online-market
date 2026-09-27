@@ -42,6 +42,19 @@ All endpoints are exposed under the `/stakeholder` base path, as detailed below:
 
 > **Note:** All responses — success and failure alike — must be wrapped in the standard `ResponseWrapper` format.
 
+### 4.1 HTTP Status Codes
+
+HTTP `200 OK` is returned **only** for a successful response (`responseCode = "SUCCESS"`). A failure must never be returned with `200`; it carries `responseCode = "FAILURE"`, the error in `responseMessage`, and a non-2xx HTTP status:
+
+| Condition | HTTP Status | Applies to |
+|---|---|---|
+| Operation succeeded | `200 OK` | All endpoints |
+| Invalid email or password | `401 Unauthorized` | `/stakeholder/login` |
+| Stakeholder with the given ID does not exist | `404 Not Found` | `/stakeholder/saveOrUpdate` (update), `/stakeholder/fetchById`, `/stakeholder/delete` |
+| Business validation failed (e.g. duplicate email, password mismatch) | `400 Bad Request` | `/stakeholder/saveOrUpdate` and other non-login endpoints |
+| Request body fails bean validation (`@Valid`) | `400 Bad Request` | Endpoints with a validated request body |
+| Missing or invalid JWT on a protected endpoint | `401 Unauthorized` | All endpoints except `/stakeholder/login` |
+
 ## 5. Existing Classes and Mapping
 
 The `Stakeholder` (DTO) and `StakeholderEntity` classes already exist and must be reused as-is. `StakeholderMapper` is responsible for correctly mapping between these two classes, and must be used consistently across the controller, service, repository, and mapper layers to ensure no direct, ad-hoc mapping is performed elsewhere.
@@ -58,5 +71,6 @@ When a stakeholder is created, the corresponding `StakeholderEntity` must be per
 - Implement `/stakeholder/fetchById` (stakeholder ID → ResponseWrapper with Stakeholder or failure)
 - Implement `/stakeholder/fetchAllStakeholders` (Pagination → ResponseWrapper with list or failure)
 - Implement `/stakeholder/delete` (stakeholder ID → ResponseWrapper success/failure)
+- Return HTTP `200` only for success; failures return `400`, `401` or `404` as defined in §4.1
 - Reuse existing `Stakeholder` and `StakeholderEntity` classes; map correctly via `StakeholderMapper`
 - Persist `StakeholderEntity` to the `t_stakeholders` table on creation

@@ -121,7 +121,9 @@ public class StakeholderService {
 
 	public List<Stakeholder> fetchAllStakeholders(Pagination pagination) {
 		Pageable pageable = toPageable(pagination);
-		Page<StakeholderEntity> page = stakeholderRepository.search(pagination.getSearchBy(), pageable);
+		// Never pass null: PostgreSQL can't infer the type of a null bind parameter, and "" matches every row.
+		String searchBy = StringUtils.hasText(pagination.getSearchBy()) ? pagination.getSearchBy().trim() : "";
+		Page<StakeholderEntity> page = stakeholderRepository.search(searchBy, pageable);
 		pagination.setPages(page.getTotalPages());
 		return page.getContent().stream()
 			.map(stakeholderMapper::toDto)
