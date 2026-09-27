@@ -41,9 +41,9 @@ class JwtAuthenticationIntegrationTest {
 		dto.setPassword("Secret123");
 		dto.setConfirmPassword("Secret123");
 		dto.setUserType("ADMIN");
-		stakeholderService.saveOrUpdate(dto);
+		Long stakeholderId = stakeholderService.saveOrUpdate(dto).getId();
 
-		mockMvc.perform(get("/api/members"))
+		mockMvc.perform(get("/stakeholder/fetchById").param("id", String.valueOf(stakeholderId)))
 			.andExpect(status().isUnauthorized());
 
 		String loginBody = """
@@ -60,7 +60,8 @@ class JwtAuthenticationIntegrationTest {
 		String token = root.path("data").path("token").asText();
 		org.assertj.core.api.Assertions.assertThat(token).isNotBlank();
 
-		mockMvc.perform(get("/api/members").header("Authorization", "Bearer " + token))
+		mockMvc.perform(get("/stakeholder/fetchById").param("id", String.valueOf(stakeholderId))
+				.header("Authorization", "Bearer " + token))
 			.andExpect(status().isOk());
 
 		mockMvc.perform(get("/actuator/health"))
