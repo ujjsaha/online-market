@@ -1,9 +1,9 @@
 ---
 name: code-commit
-description: Commit the current changes on a feature branch, push it, and open a GitHub pull request against the develop branch. Use when the user asks to commit and raise/open/create a PR.
+description: Commit the current changes on the current feat/ branch (created with /create-feat-branch), push it, and open a GitHub pull request against the develop branch. Use when the user asks to commit and raise/open/create a PR.
 argument-hint: "[optional notes, e.g. 'fixes #42' or 'draft']"
 disable-model-invocation: true
-allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git checkout -b *) Bash(git add *) Bash(git commit *) Bash(git push *) Bash(git remote *) Bash(git rev-parse *) Bash(gh pr create *) Bash(gh pr view *) Bash(gh auth status *)
+allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git add *) Bash(git commit *) Bash(git push *) Bash(git remote *) Bash(git rev-parse *) Bash(gh pr create *) Bash(gh pr view *) Bash(gh auth status *)
 ---
 
 ## Repository state
@@ -32,14 +32,18 @@ $ARGUMENTS
 
 Follow these steps in order. Stop and ask the user if anything is ambiguous or risky.
 
-1. **Check there is something to commit.** If the status above is empty, say there are no changes and stop.
+1. **Use the current working branch — never create or switch branches.**
+   - Commit and open the PR from the current branch shown above. Do not run `git switch`, `git checkout` or `git branch <name>` in this process.
+   - The current branch must be a feature branch created with `/create-feat-branch`, i.e. its name starts with `feat/`.
+   - If it doesn't (e.g. it's `develop`, `main`, `master`, another prefix, or a detached HEAD), stop without staging or committing anything and tell the user:
+     > You're on `<current branch>`, which isn't a feature branch. First create one with `/create-feat-branch <name>`, then run `/code-commit` again.
 
-2. **Review the diff before committing.** Look for:
+2. **Check there is something to commit.** If the status above is empty, say there are no changes and stop.
+
+3. **Review the diff before committing.** Look for:
    - Secrets, tokens, API keys, `.env` files or credentials — if found, stop and warn the user. Never commit them.
    - Debug leftovers (`console.log`, `print`, `debugger`, commented-out blocks), unrelated files, large binaries.
    Mention anything suspicious and ask whether to include it.
-
-3. **Get onto a feature branch.** If the current branch is `develop`, `main` or `master`, create a new branch with `git switch -c <type>/<short-kebab-description>` (e.g. `feat/add-login-rate-limit`, `fix/null-user-crash`). Never commit directly to `develop` or `main`.
 
 4. **Stage the changes.** Stage the relevant files by name with `git add <files>`. Avoid `git add -A` unless every changed file clearly belongs in this commit.
 
@@ -55,7 +59,7 @@ Follow these steps in order. Stop and ask the user if anything is ambiguous or r
    If the changes are unrelated to each other, make separate commits.
    Commit with `git commit -m "<summary>" -m "<body>"`.
 
-6. **Push** with `git push -u origin <branch>`. If the push is rejected, show the error and stop — do not force-push.
+6. **Push** the current branch with `git push -u origin <current branch>`. If the push is rejected, show the error and stop — do not force-push.
 
 7. **Open the pull request** against `develop`:
    - The base is always `develop`. Never open a PR against `main`, even if the user notes or the repo's default branch suggest otherwise.

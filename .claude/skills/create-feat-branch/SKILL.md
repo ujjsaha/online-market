@@ -46,14 +46,19 @@ Run these in order and stop on the first failure, reporting the error plainly.
    - `git pull --ff-only origin develop`
    - If the fast-forward fails (local develop has diverged), stop and tell the user; don't merge or reset on their behalf.
 
-6. **Create the feature branch**
-   - `git checkout -b <branch>`
+6. **Create the feature branch and switch to it**
+   - `git checkout -b <branch>` — this creates the branch from `develop` and makes it the current working branch.
+   - Do not switch back to `develop` or the original branch afterwards.
 
 7. **Push and set upstream**
    - `git push -u origin <branch>`
 
 8. **Restore stash if one was made in step 2** (only if the user chose to carry changes over): `git stash pop`.
 
+9. **Confirm the feature branch is the current working branch**
+   - `git branch --show-current` must print `<branch>`.
+   - If it doesn't, run `git checkout <branch>` and check again. If it still isn't current, stop and tell the user.
+
 ## Report back
 
-In two or three lines: the branch name, the develop commit it was created from (`git rev-parse --short HEAD`), and that it's pushed to origin with tracking. If `gh` is installed, include the branch URL from `gh browse -n --branch <branch>`.
+In two or three lines: the branch name (confirming it's now the current working branch), the develop commit it was created from (`git rev-parse --short HEAD`), and that it's pushed to origin with tracking. If `gh` is installed, include the branch URL from `gh browse -n --branch <branch>`.
