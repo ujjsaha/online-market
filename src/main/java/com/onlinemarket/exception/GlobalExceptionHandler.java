@@ -22,16 +22,4 @@ public class GlobalExceptionHandler {
 			"One or more fields are invalid", fieldErrors);
 		return ResponseEntity.badRequest().body(body);
 	}
-
-	@ExceptionHandler(MemberNotFoundException.class)
-	public ResponseEntity<ApiError> handleNotFound(MemberNotFoundException ex) {
-		ApiError body = ApiError.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-	}
-
-	@ExceptionHandler(DuplicateEmailException.class)
-	public ResponseEntity<ApiError> handleDuplicate(DuplicateEmailException ex) {
-		ApiError body = ApiError.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-	}
 }
