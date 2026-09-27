@@ -1,7 +1,7 @@
 ---
 name: code-commit
-description: Commit the current changes on a feature branch, push it, and open a GitHub pull request. Use when the user asks to commit and raise/open/create a PR.
-argument-hint: "[optional notes, e.g. 'fixes #42' or 'base: develop']"
+description: Commit the current changes on a feature branch, push it, and open a GitHub pull request against the develop branch. Use when the user asks to commit and raise/open/create a PR.
+argument-hint: "[optional notes, e.g. 'fixes #42' or 'draft']"
 disable-model-invocation: true
 allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git checkout -b *) Bash(git add *) Bash(git commit *) Bash(git push *) Bash(git remote *) Bash(git rev-parse *) Bash(gh pr create *) Bash(gh pr view *) Bash(gh auth status *)
 ---
@@ -9,7 +9,8 @@ allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git bran
 ## Repository state
 
 - Current branch: !`git branch --show-current`
-- Default branch: !`git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' || echo main`
+- PR base branch: `develop` (always — never `main`)
+- Remote develop branch: !`git branch -r --list origin/develop`
 - Status:
 !`git status --short`
 - Diff summary:
@@ -38,7 +39,7 @@ Follow these steps in order. Stop and ask the user if anything is ambiguous or r
    - Debug leftovers (`console.log`, `print`, `debugger`, commented-out blocks), unrelated files, large binaries.
    Mention anything suspicious and ask whether to include it.
 
-3. **Get onto a feature branch.** If the current branch is the default branch (or `main`/`master`/`develop`), create a new branch with `git switch -c <type>/<short-kebab-description>` (e.g. `feat/add-login-rate-limit`, `fix/null-user-crash`). Never commit directly to the default branch.
+3. **Get onto a feature branch.** If the current branch is `develop`, `main` or `master`, create a new branch with `git switch -c <type>/<short-kebab-description>` (e.g. `feat/add-login-rate-limit`, `fix/null-user-crash`). Never commit directly to `develop` or `main`.
 
 4. **Stage the changes.** Stage the relevant files by name with `git add <files>`. Avoid `git add -A` unless every changed file clearly belongs in this commit.
 
@@ -56,8 +57,10 @@ Follow these steps in order. Stop and ask the user if anything is ambiguous or r
 
 6. **Push** with `git push -u origin <branch>`. If the push is rejected, show the error and stop — do not force-push.
 
-7. **Open the pull request** against the default branch (or the base the user named in their notes):
-   - Preferred: `gh pr create --base <base> --title "<title>" --body "<body>"`. Run `gh auth status` first; if `gh` is missing or not logged in, use the GitHub MCP server's create pull request tool instead.
+7. **Open the pull request** against `develop`:
+   - The base is always `develop`. Never open a PR against `main`, even if the user notes or the repo's default branch suggest otherwise.
+   - If "Remote develop branch" above is empty, `origin/develop` does not exist — stop and tell the user instead of falling back to `main`.
+   - Preferred: `gh pr create --base develop --title "<title>" --body "<body>"`. Run `gh auth status` first; if `gh` is missing or not logged in, use the GitHub MCP server's create pull request tool instead.
    - Title: same as the commit summary (or a summary of all commits).
    - Body:
      ```
