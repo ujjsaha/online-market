@@ -45,15 +45,24 @@ This mirrors `ModelMapperConfig` usage but centralizes it, unlike `MemberService
 
 ## 6. `StakeholderController`
 
-Base path `/stakeholder`, all methods returning `ResponseWrapper<T>` — success and failure alike (spec §4 note), meaning **failures are caught and translated to a `ResponseWrapper` here rather than left to bubble up to `GlobalExceptionHandler`** (see open question below).
+Base path `/stakeholder`, all methods returning `ResponseEntity<ResponseWrapper<T>>` — success and failure alike are wrapped in `ResponseWrapper` (spec §4 note), meaning **failures are caught and translated to a `ResponseWrapper` here rather than left to bubble up to `GlobalExceptionHandler`**. The `ResponseEntity` carries the HTTP status (spec §4.1): `200` only for success, never for a failure.
 
-| Method | Path | Verb (proposed) | Request | Response |
+| Method | Path | Verb | Request | Response |
 |---|---|---|---|---|
-| `login` | `/stakeholder/login` | POST | `StakeholderLoginRequest` | `ResponseWrapper<Stakeholder>` |
-| `saveOrUpdate` | `/stakeholder/saveOrUpdate` | POST | `Stakeholder` | `ResponseWrapper<Stakeholder>` |
-| `fetchById` | `/stakeholder/fetchById` | GET | `id` as `@RequestParam` | `ResponseWrapper<Stakeholder>` |
-| `fetchAllStakeholders` | `/stakeholder/fetchAllStakeholders` | POST | `Pagination` | `ResponseWrapper<List<Stakeholder>>` |
-| `delete` | `/stakeholder/delete` | POST | `id` as `@RequestParam` | `ResponseWrapper<Void>` |
+| `login` | `/stakeholder/login` | POST | `StakeholderLoginRequest` | `ResponseEntity<ResponseWrapper<StakeholderLoginResponse>>` |
+| `saveOrUpdate` | `/stakeholder/saveOrUpdate` | POST | `Stakeholder` | `ResponseEntity<ResponseWrapper<Stakeholder>>` |
+| `fetchById` | `/stakeholder/fetchById` | GET | `id` as `@RequestParam` | `ResponseEntity<ResponseWrapper<Stakeholder>>` |
+| `fetchAllStakeholders` | `/stakeholder/fetchAllStakeholders` | POST | `Pagination` | `ResponseEntity<ResponseWrapper<List<Stakeholder>>>` |
+| `delete` | `/stakeholder/delete` | DELETE | `id` as `@RequestParam` | `ResponseEntity<ResponseWrapper<Void>>` |
+
+A shared private `execute(...)` helper runs each service call and maps the outcome to a status:
+
+| Outcome | `responseCode` | HTTP status |
+|---|---|---|
+| Success | `SUCCESS` | `200 OK` |
+| `StakeholderNotFoundException` | `FAILURE` | `404 Not Found` |
+| `StakeholderValidationException` on `login` | `FAILURE` | `401 Unauthorized` |
+| `StakeholderValidationException` elsewhere | `FAILURE` | `400 Bad Request` |
 
 The spec names endpoints action-style (`saveOrUpdate`, `fetchById`, `fetchAllStakeholders`) rather than REST-resource style (`GET /stakeholder/{id}`), so path variables are intentionally avoided in favor of the literal paths given.
 
@@ -64,7 +73,7 @@ The spec names endpoints action-style (`saveOrUpdate`, `fetchById`, `fetchAllSta
 ## 8. Open questions to resolve before implementation
 
 1. **Response codes/messages convention** — `ResponseWrapper.responseCode`/`responseMessage` need a defined vocabulary (e.g. `"SUCCESS"`/`"FAILURE"`, or numeric codes like `"200"`/`"500"`). Not specified in the spec.
-2. **Failure HTTP status** — since all responses (including failures) are wrapped in `ResponseWrapper` rather than `ApiError`, should failed calls still return non-2xx HTTP status codes, or always `200 OK` with the failure encoded in the body? This determines whether `GlobalExceptionHandler` is bypassed entirely for `/stakeholder/**` or whether it's extended to emit `ResponseWrapper` instead of `ApiError` for stakeholder-specific exceptions.
+2. ~~**Failure HTTP status**~~ — **Resolved:** failures return non-2xx statuses (`400`/`401`/`404`) with the failure in a `ResponseWrapper` body; `200 OK` is reserved for success. Stakeholder exceptions are still handled in the controller, not `GlobalExceptionHandler`. See §6 and spec §4.1.
 3. **Password handling** — `SecurityConfig` already has a `PasswordEncoder` bean. Should `saveOrUpdate` hash the password before persisting, and should `login` compare via `passwordEncoder.matches(...)`? The spec doesn't mention hashing, but storing/comparing plaintext would be a real security gap.
 4. **`confirmPassword` validation** — should the service reject `saveOrUpdate` when `password != confirmPassword`? Spec doesn't call this out.
 5. **Access control per endpoint** — which of the five endpoints (beyond `login`) are public vs. require authentication/role.
