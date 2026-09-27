@@ -27,7 +27,7 @@ public class SecurityConfig {
 				.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
 				.requestMatchers("/h2-console/**").permitAll()
 				.requestMatchers("/stakeholder/login").permitAll()
-				//.requestMatchers("/stakeholder/saveOrUpdate").permitAll()
+				.requestMatchers("/stakeholder/saveOrUpdate").permitAll()
 				.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/actuator/**").hasRole("ADMIN")
 				.anyRequest().authenticated())
